@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SQL Query Solutions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    pre {
+      background-color: #1e1e1e;
+      color: #dcdcdc;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 p-6">
+  <h1 class="text-3xl font-bold mb-8 text-center">SQL Practice Questions</h1>
+
+  <!-- Question Template -->
+  <div class="space-y-10">
+    <!-- Q1 -->
+    <div class="bg-gray-800 rounded-2xl shadow-lg p-6">
+      <h2 class="text-xl font-semibold mb-4">1️⃣ Which products are performing above average? (Price &gt; Average of all products)</h2>
+      <div class="tabs space-x-4 mb-4">
+        <button onclick="showTab('q1-sub')" class="px-3 py-1 bg-blue-600 rounded">Subquery</button>
+        <button onclick="showTab('q1-cte')" class="px-3 py-1 bg-green-600 rounded">CTE</button>
+        <button onclick="showTab('q1-view')" class="px-3 py-1 bg-purple-600 rounded">View</button>
+        <button onclick="showTab('q1-win')" class="px-3 py-1 bg-pink-600 rounded">Window</button>
+      </div>
+      <div id="q1-sub" class="tab">
+        <pre>select Product.ProductName ,Product.Price 
+from Product
+where Price &gt; (select AVG(Price) from Product);</pre>
+      </div>
+      <div id="q1-cte" class="tab hidden">
+        <pre>with AvgPrice as (
+  select AVG(Price) as Avg_Price
+  from Product)
+select Product.ProductName ,Product.Price
+from Product cross join AvgPrice
+where Price &gt; Avg_Price;</pre>
+      </div>
+      <div id="q1-view" class="tab hidden">
+        <pre>create view AvgPrice as 
+select Product.ProductName ,Product.Price
+from Product
+where Price &gt; (select AVG(Price) from Product);
+
+select * from AvgPrice;</pre>
+      </div>
+      <div id="q1-win" class="tab hidden">
+        <pre>select ProductName , avg_price
+from (
+  select Product.ProductName, Product.Price,
+         AVG(Price) over(partition by categoryid) as avg_price
+  from Product) AvgPrice
+where Price &gt; avg_price;</pre>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="bg-gray-800 rounded-2xl shadow-lg p-6">
+      <h2 class="text-xl font-semibold mb-4">2️⃣ Find products above average compared to their category competitors</h2>
+      <div class="tabs space-x-4 mb-4">
+        <button onclick="showTab('q2-sub')" class="px-3 py-1 bg-blue-600 rounded">Subquery</button>
+        <button onclick="showTab('q2-cte')" class="px-3 py-1 bg-green-600 rounded">CTE</button>
+        <button onclick="showTab('q2-view')" class="px-3 py-1 bg-purple-600 rounded">View</button>
+        <button onclick="showTab('q2-win')" class="px-3 py-1 bg-pink-600 rounded">Window</button>
+      </div>
+      <div id="q2-sub" class="tab">
+        <pre>select p.ProductName , p.Price , p.CategoryID
+from Product p 
+join (select CategoryID , AVG(price) as avg_price
+      from Product group by CategoryID) AvgPrice
+on p.CategoryID = AvgPrice.CategoryID
+where Price &gt; avg_price;</pre>
+      </div>
+      <div id="q2-cte" class="tab hidden">
+        <pre>with AvgPrice as (
+  select CategoryID, AVG(price) as avg_price
+  from Product group by CategoryID)
+select p.ProductName, p.Price, p.CategoryID
+from Product p cross join AvgPrice
+where Price &gt; avg_price;</pre>
+      </div>
+      <div id="q2-view" class="tab hidden">
+        <pre>create view Av_Price as 
+select p.ProductName , p.Price , p.CategoryID
+from Product p 
+join (select CategoryID , AVG(price) as avg_price
+      from Product group by CategoryID) A_Price
+on p.CategoryID = A_Price.CategoryID
+where price &gt; avg_price;
+
+select * from Av_Price;</pre>
+      </div>
+      <div id="q2-win" class="tab hidden">
+        <pre>select ProductName , Price , CategoryID, avg_price
+from (
+  select p.ProductName , p.Price , p.CategoryID,
+         avg(price) over(partition by categoryid) as avg_price
+  from Product p) AvgPrice
+where Price &gt; avg_price;</pre>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="bg-gray-800 rounded-2xl shadow-lg p-6">
+      <h2 class="text-xl font-semibold mb-4">3️⃣ Identify champion products (highest price per category)</h2>
+      <div class="tabs space-x-4 mb-4">
+        <button onclick="showTab('q3-sub')" class="px-3 py-1 bg-blue-600 rounded">Subquery</button>
+        <button onclick="showTab('q3-cte')" class="px-3 py-1 bg-green-600 rounded">CTE</button>
+        <button onclick="showTab('q3-view')" class="px-3 py-1 bg-purple-600 rounded">View</button>
+        <button onclick="showTab('q3-win')" class="px-3 py-1 bg-pink-600 rounded">Window</button>
+      </div>
+      <div id="q3-sub" class="tab">
+        <pre>select P.ProductName , P.CategoryID , Max_price
+from Product P
+join (select CategoryID, max(Price) as Max_price
+      from Product group by CategoryID) MaxPrice
+on p.CategoryID = MaxPrice.CategoryID
+where Price = Max_price
+order by Max_price desc;</pre>
+      </div>
+      <div id="q3-cte" class="tab hidden">
+        <pre>with MaxPrice as (
+  select CategoryID, max(Price) as Max_price
+  from Product group by CategoryID)
+select P.ProductName ,P.CategoryID, P.Price
+from Product P cross join MaxPrice
+where Price = Max_price
+order by Max_price desc;</pre>
+      </div>
+      <div id="q3-view" class="tab hidden">
+        <pre>create view MaxPrice as 
+select p.* , Max_Price
+from Product p
+join (select CategoryID, max(Price) as Max_Price
+      from Product group by CategoryID) Max_P
+on p.CategoryID = Max_P.CategoryID
+where Price = Max_Price;
+
+select * from MaxPrice;</pre>
+      </div>
+      <div id="q3-win" class="tab hidden">
+        <pre>Select Productname , Price
+from (
+  Select Productname ,Price,CategoryID,
+         rank() over(partition by categoryid order by price desc) as max_price
+  from Product) maxPrice
+where max_price = 1;</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showTab(id) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
